@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ไฟฟ้าในสมอง</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600&family=Bai+Jamjuree:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column of "lab bench" panels; each mechanism gets a live canvas, then the brain map closes the page. */
+:root{
+  --bg:#edf1f3; --surface:#ffffff; --surface2:#f4f7f8; --ink:#15222c; --muted:#56687a; --line:#cfd9e0;
+  --signal:#0b8aa3; --na:#c4730e; --k:#6c45cc; --ca:#23905a; --nt:#c2417a;
+  --membrane:#e0c49b; --myelin:#d8ccb6; --region:#d3dfe6; --region-h:#bcd0db; --deep:#f1d3e0;
+  --f-display:"Bai Jamjuree","Anuphan","Noto Sans Thai",sans-serif;
+  --f-body:"Anuphan","Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d151b; --surface:#141f27; --surface2:#1a2731; --ink:#e2ebf0; --muted:#94a6b3; --line:#2b3b47;
+  --signal:#3fc3dc; --na:#f0a53a; --k:#a68bff; --ca:#52c98a; --nt:#f07aa8;
+  --membrane:#6a5639; --myelin:#4d4637; --region:#22323d; --region-h:#2e4352; --deep:#4d2b3c; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0d151b; --surface:#141f27; --surface2:#1a2731; --ink:#e2ebf0; --muted:#94a6b3; --line:#2b3b47;
+  --signal:#3fc3dc; --na:#f0a53a; --k:#a68bff; --ca:#52c98a; --nt:#f07aa8;
+  --membrane:#6a5639; --myelin:#4d4637; --region:#22323d; --region-h:#2e4352; --deep:#4d2b3c; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(30px,6vw,52px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(22px,3.6vw,30px);font-weight:600}
+h3{font-size:20px;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--signal)}
+.lead{font-size:18px;color:var(--ink)}
+.muted{color:var(--muted)}
+.na{color:var(--na);font-weight:600}.k{color:var(--k);font-weight:600}.ca{color:var(--ca);font-weight:600}.nt{color:var(--nt);font-weight:600}.sig{color:var(--signal);font-weight:600}
+
+header{display:flex;flex-direction:column;gap:18px;padding-top:12px}
+.facts{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:6px}
+.fact{display:flex;flex-direction:column;min-width:0}
+.fact b{font-family:var(--f-mono);font-size:24px;font-weight:700;color:var(--signal);font-variant-numeric:tabular-nums}
+.fact span{font-size:14px;color:var(--muted)}
+.callout{border-left:3px solid var(--signal);padding:4px 0 4px 16px;max-width:70ch}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px}
+nav.toc a{font-size:14px;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--surface);padding:4px 12px;border-radius:999px}
+nav.toc a:hover,nav.toc a:focus-visible{border-color:var(--signal);color:var(--signal)}
+
+section{display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px}
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.bench canvas{display:block;width:100%}
+.bench .bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 14px;border-top:1px solid var(--line);background:var(--surface2)}
+.bench .bar.top{border-top:0;border-bottom:1px solid var(--line)}
+button.go{font-family:var(--f-body);font-size:15px;font-weight:600;background:var(--signal);color:var(--surface);border:0;border-radius:999px;padding:8px 18px;cursor:pointer}
+button.go:disabled{opacity:.55;cursor:default}
+button.go:focus-visible,label.tog input:focus-visible+span{outline:3px solid var(--ink);outline-offset:2px}
+label.tog{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+.readout{margin-left:auto;font-family:var(--f-mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.readout small{font-size:12px;color:var(--muted);font-weight:500;margin-right:6px}
+
+ol.stages{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+ol.stages li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);font-size:14px;line-height:1.6;transition:border-color .25s,background .25s;min-width:0}
+ol.stages li b{display:block;font-family:var(--f-display);font-size:15px;margin-bottom:2px}
+ol.stages li .n{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+ol.stages li.on{border-color:var(--signal);background:color-mix(in srgb,var(--signal) 10%,var(--surface))}
+
+.mapgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.mapgrid{grid-template-columns:1fr}}
+.brainsvg{display:block;width:100%;height:auto}
+.region{fill:var(--region);stroke:var(--surface);stroke-width:2.5;cursor:pointer;transition:fill .2s,opacity .3s}
+.region:hover,.region:focus-visible{fill:var(--region-h);outline:none}
+.region.on{fill:var(--signal)}
+.gyri path{fill:none;stroke:var(--muted);stroke-opacity:.28;stroke-width:1.6;stroke-linecap:round;pointer-events:none}
+.lbl{font-family:var(--f-body);font-size:13px;font-weight:600;fill:var(--ink);pointer-events:none}
+.deepgrp{display:none}
+svg.show-deep .deepgrp{display:inline}
+svg.show-deep .lobe{opacity:.4}
+.deep{fill:var(--deep);stroke:var(--nt);stroke-width:1.5;stroke-dasharray:4 3;cursor:pointer}
+.deep.line{fill:none;stroke:var(--deep);stroke-width:14;stroke-linecap:round;stroke-dasharray:none}
+.deep.on{fill:var(--nt)}.deep.line.on{stroke:var(--nt);fill:none}
+.deep:focus-visible{outline:none;stroke:var(--ink)}
+.info{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.info .en{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.05em}
+.info ul{margin:0;padding-left:20px}
+.info .ex,.info .lrn{font-size:15px;background:var(--surface2);border-radius:8px;padding:8px 12px}
+.pathcap{min-height:3.4em;font-size:15px}
+.pathcap b{font-family:var(--f-mono);color:var(--signal)}
+
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.parts div{border-top:2px solid var(--line);padding-top:10px;min-width:0}
+.parts b{font-family:var(--f-display);font-size:17px;display:block}
+.learn{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.learn article{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">ประสาทวิทยาฉบับเข้าใจง่าย</div>
+  <h1>สมองสร้างไฟฟ้าได้อย่างไร</h1>
+  <p class="lead">ทุกความคิด ทุกการขยับนิ้ว เริ่มจากสัญญาณไฟฟ้าเล็ก ๆ ในเซลล์ประสาท แต่ไฟฟ้าในสมองไม่เหมือนไฟในสายไฟ สายไฟใช้อิเล็กตรอนวิ่ง ส่วนสมองใช้ <b>ไอออน</b> (อะตอมที่มีประจุ เช่น โซเดียม <span class="na">Na⁺</span> และโพแทสเซียม <span class="k">K⁺</span>) ไหลเข้าออกผ่านประตูเล็ก ๆ บนผนังเซลล์</p>
+  <div class="facts">
+    <div class="fact"><b>~86,000 ล้าน</b><span>เซลล์ประสาทในสมองคน</span></div>
+    <div class="fact"><b>~20 วัตต์</b><span>พลังงานที่สมองใช้ ใกล้เคียงหลอดไฟดวงเล็ก</span></div>
+    <div class="fact"><b>−70 mV</b><span>แรงดันไฟของเซลล์ตอนพัก</span></div>
+  </div>
+  <nav class="toc" aria-label="สารบัญ">
+    <a href="#spark">1 · ไฟฟ้าเกิดที่เซลล์</a>
+    <a href="#travel">2 · สัญญาณวิ่งไปตามสาย</a>
+    <a href="#synapse">3 · ส่งต่อข้ามเซลล์</a>
+    <a href="#map">4 · สมองมีกี่ส่วน</a>
+    <a href="#learn">5 · ใช้กับการเรียนรู้</a>
+  </nav>
+</header>
+
+<section id="spark">
+  <div class="eyebrow">ขั้นที่ 1 · กระแสประสาท (Action potential)</div>
+  <h2>เซลล์ประสาทคือแบตเตอรี่ที่ชาร์จตัวเองได้</h2>
+  <p>ปั๊มบนผนังเซลล์คอยดัน <span class="na">Na⁺</span> ออกไปข้างนอก และดึง <span class="k">K⁺</span> เข้ามาข้างใน ทำให้ข้างในเป็นลบกว่าข้างนอกราว 70 มิลลิโวลต์ เมื่อเซลล์ถูกกระตุ้นจนถึง "จุดเริ่ม" ประตูโซเดียมจะเปิดพรึ่บ ไอออนบวกไหลทะลักเข้า ข้างในกลายเป็นบวกชั่วครู่ นี่คือ "การยิง" ของเซลล์ประสาท ซึ่งเกิดขึ้นในเวลาแค่ราว 1–2 มิลลิวินาที</p>
+  <div class="bench">
+    <div class="bar top">
+      <button class="go" id="fireBtn" type="button">กระตุ้นเซลล์</button>
+      <label class="tog"><input type="checkbox" id="slowChk"><span>ดูแบบช้า</span></label>
+      <div class="legend"><span><i style="background:var(--na);border-radius:50%"></i>Na⁺ โซเดียม</span><span><i style="background:var(--k)"></i>K⁺ โพแทสเซียม</span></div>
+      <div class="readout" aria-live="polite"><small>แรงดันในเซลล์</small><span id="vRead">−70 mV</span></div>
+    </div>
+    <canvas id="memCanvas" aria-label="ภาพเคลื่อนไหวไอออนผ่านเยื่อหุ้มเซลล์"></canvas>
+    <canvas id="plotCanvas" aria-label="กราฟแรงดันไฟฟ้าตามเวลา" style="border-top:1px solid var(--line)"></canvas>
+  </div>
+  <ol class="stages" id="memStages">
+    <li class="on"><span class="n">ช่วงพัก</span><b>พร้อมยิง −70 mV</b>ข้างในเป็นลบ ปั๊มรักษาความต่างของไอออนไว้ตลอดเวลา</li>
+    <li><span class="n">ถูกกระตุ้น</span><b>ถึงจุดเริ่ม −55 mV</b>สัญญาณจากเซลล์อื่นสะสมจนเกินเส้น ถ้าไม่ถึงก็ไม่ยิงเลย (ยิงเต็มหรือไม่ยิง)</li>
+    <li><span class="n">Na⁺ เข้า</span><b>พุ่งขึ้นถึง +40 mV</b>ประตูโซเดียมเปิด ไอออนบวกไหลเข้า ข้างในกลับเป็นบวก</li>
+    <li><span class="n">K⁺ ออก</span><b>ดิ่งลงถึง −80 mV</b>ประตูโซเดียมปิด ประตูโพแทสเซียมเปิด ประจุบวกไหลออก แรงดันตกต่ำกว่าเดิมเล็กน้อย</li>
+    <li><span class="n">คืนสภาพ</span><b>ปั๊มชาร์จกลับ</b>ปั๊ม Na⁺/K⁺ แลก 3 Na⁺ ออก กับ 2 K⁺ เข้า โดยใช้พลังงาน ATP พร้อมยิงครั้งต่อไป</li>
+  </ol>
+  <p class="muted" style="font-size:14px">ภาพนี้ขยายจำนวนไอออนที่เคลื่อนให้เห็นชัด ของจริงไอออนที่ข้ามเยื่อหุ้มในการยิงหนึ่งครั้งมีสัดส่วนน้อยมากเมื่อเทียบกับทั้งหมด</p>
+</section>
+
+<section id="travel">
+  <div class="eyebrow">ขั้นที่ 2 · การนำสัญญาณ</div>
+  <h2>สัญญาณวิ่งไปตามแอกซอน เหมือนโดมิโนล้มต่อกัน</h2>
+  <p>เมื่อจุดหนึ่งยิง ประจุบวกที่ไหลเข้าจะไปกระตุ้นจุดถัดไปให้ถึงจุดเริ่มด้วย สัญญาณจึงวิ่งต่อกันไปจนสุดสาย แอกซอนหลายเส้นมี <b>ปลอกไมอีลิน</b> (ฉนวนไขมัน) หุ้มเป็นท่อน ๆ สัญญาณจึงกระโดดข้ามจากช่องว่างหนึ่งไปอีกช่องว่างหนึ่ง เร็วกว่ามาก ปลอกนี้หนาขึ้นได้จากการฝึกทักษะซ้ำ ๆ</p>
+  <div class="bench">
+    <div class="bar top">
+      <button class="go" id="raceBtn" type="button">ส่งสัญญาณพร้อมกัน</button>
+      <span class="muted" style="font-size:14px">มีไมอีลิน ~ถึง 100 ม./วินาที · ไม่มี ~0.5–2 ม./วินาที (ภาพนี้ย่อความต่างให้ดูทัน)</span>
+    </div>
+    <canvas id="travelCanvas" aria-label="เปรียบเทียบความเร็วสัญญาณในแอกซอนที่มีและไม่มีไมอีลิน"></canvas>
+  </div>
+</section>
+
+<section id="synapse">
+  <div class="eyebrow">ขั้นที่ 3 · ไซแนปส์ (Synapse)</div>
+  <h2>ที่ปลายสาย ไฟฟ้าเปลี่ยนเป็นสารเคมี แล้วกลับเป็นไฟฟ้าอีกครั้ง</h2>
+  <p>เซลล์ประสาทไม่ได้ต่อชนกันตรง ๆ มีช่องว่างแคบ ๆ คั่นอยู่ เมื่อสัญญาณมาถึงปลายสาย แคลเซียม <span class="ca">Ca²⁺</span> ไหลเข้า ทำให้ถุงเล็ก ๆ ปล่อย <span class="nt">สารสื่อประสาท</span> (เช่น กลูตาเมต โดพามีน เซโรโทนิน) ออกมาเกาะตัวรับของเซลล์ถัดไป ประตูไอออนของเซลล์นั้นจึงเปิด และเกิดสัญญาณไฟฟ้าใหม่ สมองคนมีจุดเชื่อมแบบนี้ประมาณร้อยล้านล้านจุด</p>
+  <div class="bench">
+    <div class="bar top">
+      <button class="go" id="synBtn" type="button">ส่งสัญญาณข้ามไซแนปส์</button>
+      <div class="legend"><span><i style="background:var(--ca);border-radius:2px"></i>Ca²⁺ แคลเซียม</span><span><i style="background:var(--nt);border-radius:50%"></i>สารสื่อประสาท</span><span><i style="background:var(--na);border-radius:50%"></i>Na⁺ เข้าเซลล์รับ</span></div>
+    </div>
+    <canvas id="synCanvas" aria-label="ภาพเคลื่อนไหวการส่งสารสื่อประสาทข้ามไซแนปส์"></canvas>
+  </div>
+  <ol class="stages" id="synStages">
+    <li class="on"><span class="n">1</span><b>ไฟฟ้ามาถึง</b>กระแสประสาทวิ่งลงมาถึงปลายแอกซอน</li>
+    <li><span class="n">2</span><b>Ca²⁺ ไหลเข้า</b>ประตูแคลเซียมเปิดเพราะแรงดันเปลี่ยน</li>
+    <li><span class="n">3</span><b>ถุงปล่อยสาร</b>ถุงสารสื่อประสาทหลอมกับผนัง แล้วเทสารออกสู่ช่องว่าง</li>
+    <li><span class="n">4</span><b>เกาะตัวรับ</b>ตัวรับเปิดประตูไอออน เซลล์รับเริ่มมีสัญญาณไฟฟ้าใหม่</li>
+    <li><span class="n">5</span><b>เก็บกวาด</b>สารถูกดูดกลับหรือย่อยสลาย พร้อมรอบใหม่ (ยาหลายชนิดออกฤทธิ์ตรงขั้นนี้)</li>
+  </ol>
+</section>
+
+<section id="map">
+  <div class="eyebrow">ขั้นที่ 4 · แผนที่สมอง</div>
+  <h2>สมองแบ่งเป็นกี่ส่วน ทำหน้าที่อะไร</h2>
+  <div class="parts">
+    <div><b>1. สมองใหญ่ (Cerebrum)</b>ส่วนที่ใหญ่ที่สุด แบ่งเป็นซีกซ้ายและขวา เชื่อมกันด้วยสะพานใยประสาท แต่ละซีกมี 4 กลีบหลัก (บางตำรานับกลีบอินซูลาด้านในเป็นกลีบที่ 5)</div>
+    <div><b>2. สมองน้อย (Cerebellum)</b>อยู่ด้านหลังล่าง ขนาดเล็กแต่มีเซลล์ประสาทมากกว่าครึ่งของทั้งสมอง ดูแลการทรงตัวและความแม่นยำของการเคลื่อนไหว</div>
+    <div><b>3. ก้านสมอง (Brainstem)</b>เชื่อมสมองกับไขสันหลัง คุมสิ่งที่ทำงานเองโดยไม่ต้องคิด เช่น หายใจ หัวใจเต้น</div>
+  </div>
+  <p>แตะส่วนต่าง ๆ บนภาพเพื่ออ่านหน้าที่ เปิด "ส่วนลึก" เพื่อดูโครงสร้างที่ซ่อนอยู่ด้านใน หรือกด "ดูเส้นทางคำสั่ง" เพื่อดูว่าสมองหลายส่วนทำงานต่อกันอย่างไรตอนเราหยิบแก้วน้ำ (ภาพมองจากด้านซ้าย หน้าผากอยู่ทางซ้าย)</p>
+  <div class="mapgrid">
+    <div class="bench">
+      <div class="bar top">
+        <button class="go" id="pathBtn" type="button">ดูเส้นทางคำสั่ง: หยิบแก้วน้ำ</button>
+        <label class="tog"><input type="checkbox" id="deepChk"><span>แสดงส่วนลึก</span></label>
+      </div>
+      <svg class="brainsvg" id="brain" viewBox="0 0 600 450" role="group" aria-label="แผนที่สมองแบบคลิกได้">
+        <defs><clipPath id="cer"><path id="cerPath" d="M92 235 C72 150 140 68 262 58 C372 48 470 80 522 150 C556 200 548 262 512 290 C482 314 442 316 410 306 C382 330 332 336 290 322 C248 334 200 330 178 318 C152 304 150 282 170 262 C140 272 100 268 92 235 Z"/></clipPath>
+        <clipPath id="cbl"><ellipse cx="450" cy="345" rx="72" ry="40"/></clipPath></defs>
+        <g class="lobe">
+          <ellipse class="region" data-id="cerebellum" tabindex="0" role="button" aria-label="สมองน้อย" cx="450" cy="345" rx="72" ry="40"/>
+          <g class="gyri" clip-path="url(#cbl)"><path d="M380 328 C420 318 480 318 524 334"/><path d="M380 346 C420 336 485 338 524 352"/><path d="M384 364 C425 356 480 358 520 370"/></g>
+          <path class="region" data-id="brainstem" tabindex="0" role="button" aria-label="ก้านสมอง" d="M350 298 C356 340 360 380 356 450 L390 450 C384 380 392 340 404 296 Z"/>
+          <g clip-path="url(#cer)">
+            <path class="region" data-id="frontal" tabindex="0" role="button" aria-label="สมองกลีบหน้า" d="M0 0 L286 0 L240 232 L170 258 L0 262 Z"/>
+            <path class="region" data-id="motor" tabindex="0" role="button" aria-label="คอร์เท็กซ์สั่งการ" d="M286 0 L313 0 L266 228 L240 232 Z"/>
+            <path class="region" data-id="somato" tabindex="0" role="button" aria-label="คอร์เท็กซ์รับความรู้สึก" d="M313 0 L341 0 L294 226 L266 228 Z"/>
+            <path class="region" data-id="parietal" tabindex="0" role="button" aria-label="สมองกลีบข้าง" d="M341 0 L455 0 L475 235 L390 222 L294 226 Z"/>
+            <path class="region" data-id="occipital" tabindex="0" role="button" aria-label="สมองกลีบท้ายทอย" d="M455 0 L600 0 L600 450 L462 450 L470 300 L475 235 Z"/>
+            <path class="region" data-id="temporal" tabindex="0" role="button" aria-label="สมองกลีบขมับ" d="M0 262 L170 258 L240 232 L266 228 L294 226 L390 222 L475 235 L470 300 L462 450 L0 450 Z"/>
+            <g class="gyri"><path d="M128 150 C160 128 190 140 212 118"/><path d="M118 200 C150 188 182 206 216 184"/><path d="M180 92 C206 110 228 98 244 122"/><path d="M150 236 C182 224 206 238 232 220"/><path d="M362 76 C372 108 350 130 370 160"/><path d="M410 98 C430 120 418 150 446 172"/><path d="M332 190 C362 178 384 196 414 184"/><path d="M482 118 C502 140 492 170 516 192"/><path d="M212 292 C256 274 300 290 342 268"/><path d="M246 312 C290 300 334 312 384 290"/><path d="M486 228 C498 250 504 262 518 258"/></g>
+          </g>
+          <use href="#cerPath" fill="none" stroke="var(--muted)" stroke-opacity=".45" stroke-width="1.5" pointer-events="none"/>
+          <text class="lbl" x="150" y="168">กลีบหน้า</text>
+          <text class="lbl" x="0" y="0" transform="translate(268 150) rotate(-78)" style="font-size:11px">สั่งการ</text>
+          <text class="lbl" x="0" y="0" transform="translate(296 150) rotate(-78)" style="font-size:11px">รับสัมผัส</text>
+          <text class="lbl" x="372" y="140">กลีบข้าง</text>
+          <text class="lbl" x="478" y="205">ท้ายทอย</text>
+          <text class="lbl" x="300" y="286">กลีบขมับ</text>
+          <text class="lbl" x="420" y="372">สมองน้อย</text>
+          <text class="lbl" x="398" y="430">ก้านสมอง</text>
+        </g>
+        <g class="deepgrp">
+          <ellipse class="deep" data-id="thalamus" tabindex="0" role="button" aria-label="ทาลามัส" cx="332" cy="196" rx="30" ry="17"/>
+          <ellipse class="deep" data-id="hypothalamus" tabindex="0" role="button" aria-label="ไฮโปทาลามัส" cx="292" cy="232" rx="14" ry="9"/>
+          <path class="deep line" data-id="hippocampus" tabindex="0" role="button" aria-label="ฮิปโปแคมปัส" d="M286 272 C304 290 340 292 368 270 C382 258 390 246 386 236"/>
+          <circle class="deep" data-id="amygdala" tabindex="0" role="button" aria-label="อะมิกดาลา" cx="266" cy="268" r="10"/>
+          <text class="lbl" x="332" y="170" text-anchor="middle" style="font-size:12px">ทาลามัส</text>
+          <text class="lbl" x="232" y="226" text-anchor="end" style="font-size:12px">ไฮโปทาลามัส</text>
+          <text class="lbl" x="250" y="300" text-anchor="end" style="font-size:12px">อะมิกดาลา</text>
+          <text class="lbl" x="350" y="312" style="font-size:12px">ฮิปโปแคมปัส</text>
+        </g>
+      </svg>
+      <div class="bar"><div class="pathcap" id="pathCap" aria-live="polite">แตะส่วนใดก็ได้ของสมอง หรือกดปุ่มด้านบนเพื่อดูการทำงานต่อกันเป็นทอด ๆ</div></div>
+    </div>
+    <aside class="info" id="info" aria-live="polite"></aside>
+  </div>
+</section>
+
+<section id="learn">
+  <div class="eyebrow">ขั้นที่ 5 · เชื่อมกับการเรียนรู้</div>
+  <h2>รู้กลไกแล้ว เอาไปใช้เรียนและพักอย่างไร</h2>
+  <div class="learn">
+    <article><h3>ทำซ้ำ เส้นทางยิ่งแข็งแรง</h3><p>เซลล์ที่ยิงพร้อมกันบ่อย ๆ จุดเชื่อมระหว่างกันจะแรงขึ้น ส่วนสายที่ใช้บ่อยก็ได้ไมอีลินหนาขึ้น การลงมือทำจริงซ้ำ ๆ จึงเปลี่ยนโครงสร้างสมองได้จริง</p></article>
+    <article><h3>นอนแล้วจำดีขึ้น</h3><p>ระหว่างหลับ ฮิปโปแคมปัส "เล่นซ้ำ" สิ่งที่เรียนมา ช่วยย้ายไปเก็บเป็นความจำระยะยาว การพักจึงเป็นส่วนหนึ่งของการเรียน ไม่ใช่เวลาที่เสียไป</p></article>
+    <article><h3>รู้สึกปลอดภัย คิดได้กว้าง</h3><p>เมื่อเครียดหนัก อะมิกดาลาทำงานเด่น สมองกลีบหน้าส่วนที่ใช้ไตร่ตรองและเปิดรับมุมมองใหม่ทำงานได้น้อยลง บรรยากาศที่ปลอดภัยช่วยให้รับ feedback ได้ดีขึ้น</p></article>
+  </div>
+</section>
+
+<footer>เนื้อหาอิงความรู้ทั่วไปทางประสาทวิทยา ตัวเลขเป็นค่าประมาณ (เช่น จำนวนเซลล์ประสาท ~86,000 ล้าน, ระยะช่องไซแนปส์ ~20 นาโนเมตร) ภาพเคลื่อนไหวเป็นแบบจำลองอย่างง่ายเพื่อให้เห็นหลักการ ไม่ได้วาดตามสัดส่วนจริง การแบ่งหน้าที่ของสมองแต่ละส่วนก็เป็นภาพรวม เพราะของจริงหลายส่วนทำงานร่วมกันเป็นเครือข่ายเสมอ</footer>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const C = {};
+function readColors(){ const cs = getComputedStyle(document.documentElement);
+  ['bg','surface','surface2','ink','muted','line','signal','na','k','ca','nt','membrane','myelin'].forEach(n => C[n] = cs.getPropertyValue('--'+n).trim()); }
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
+new MutationObserver(readColors).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+const FONT = '"Anuphan","Noto Sans Thai",sans-serif';
+function setup(cv, h){ const dpr = Math.min(2, window.devicePixelRatio || 1); const w = cv.clientWidth || 600;
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); cv.style.height = h+'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); return {ctx, w, h}; }
+function rr(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function pill(ctx,text,x,y,align,color){ ctx.font='600 12px '+FONT; const m=ctx.measureText(text).width;
+  const x0 = align==='center' ? x-m/2-7 : align==='right' ? x-m-14 : x;
+  ctx.globalAlpha=.92; ctx.fillStyle=C.surface; rr(ctx,x0,y-11,m+14,22,11); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle=color||C.muted; ctx.textBaseline='middle'; ctx.textAlign='left'; ctx.fillText(text,x0+7,y); }
+const ease = x => x<0?0:x>1?1:x*x*(3-2*x);
+const rnd = (a,b) => a + Math.random()*(b-a);
+const fmtV = v => (v>0.5?'+':v<-0.5?'−':'') + Math.abs(Math.round(v)) + ' mV';
+
+/* ---------- 1. membrane + voltage ---------- */
+const mem = {cv:$('#memCanvas'), H:300, parts:[], t:null, trace:[], last:[], speed:0.9, accNa:0, accK:0, pumpT:0, pump:0, fired:false};
+const plot = {cv:$('#plotCanvas'), H:190};
+function volt(t){ if(t===null||t<0.3) return -70;
+  if(t<0.6) return -70+15*ease((t-0.3)/0.3);
+  if(t<1.1) return -55+95*ease((t-0.6)/0.5);
+  if(t<1.9) return 40-120*ease((t-1.1)/0.8);
+  if(t<4.5) return -80+10*(1-Math.exp(-(t-1.9)*1.6))/(1-Math.exp(-2.6*1.6));
+  return -70; }
+function memStage(t){ if(t===null||t<0.3) return 0; if(t<0.6) return 1; if(t<1.1) return 2; if(t<1.9) return 3; if(t<4.5) return 4; return 0; }
+function memLayout(){ const oldW = mem.w; Object.assign(mem, setup(mem.cv, mem.H));
+  mem.top=120; mem.bot=164; mem.naX=mem.w*0.24; mem.kX=mem.w*0.5; mem.pumpX=mem.w*0.78;
+  if(oldW && oldW!==mem.w) mem.parts.forEach(p=>{ p.x*=mem.w/oldW; if(p.wp){ const q=p.wp[p.wp.length-1]; p.x=q.x*mem.w/oldW; p.y=q.y; p.wp=null; } });
+  Object.assign(plot, setup(plot.cv, plot.H)); }
+function randIn(side){ return {x:rnd(12,mem.w-12), y: side==='out' ? rnd(16,mem.top-14) : rnd(mem.bot+14,mem.H-16)}; }
+function memInit(){ memLayout(); mem.parts=[];
+  const add=(type,side,n)=>{ for(let i=0;i<n;i++){ const q=randIn(side); mem.parts.push({type,side,x:q.x,y:q.y,vx:0,vy:0,wp:null}); } };
+  add('na','out',24); add('na','in',5); add('k','out',4); add('k','in',22); }
+function sendThrough(type, from, chX){ let best=null, bd=1e9;
+  for(const p of mem.parts){ if(p.type!==type||p.side!==from||p.wp) continue; const d=Math.abs(p.x-chX)+Math.abs(p.y-(from==='out'?mem.top:mem.bot)); if(d<bd){bd=d;best=p;} }
+  if(!best) return false; const to = from==='out'?'in':'out';
+  const mOut = mem.top-10, mIn = mem.bot+10;
+  best.wp = [{x:chX+rnd(-3,3), y: from==='out'?mOut:mIn}, {x:chX, y: from==='out'?mIn:mOut}, randIn(to)];
+  best.side = to; return true; }
+function memUpdate(dt){
+  if(mem.t!==null){ mem.t += dt*mem.speed; const t=mem.t;
+    if(t>0.6 && t<1.15){ mem.accNa+=dt*mem.speed; while(mem.accNa>0.06){ mem.accNa-=0.06; sendThrough('na','out',mem.naX); } }
+    if(t>1.0 && t<2.2){ mem.accK+=dt*mem.speed; while(mem.accK>0.13){ mem.accK-=0.13; sendThrough('k','in',mem.kX); } }
+    mem.trace.push([t, volt(t)]);
+    if(t>5){ mem.last=mem.trace; mem.trace=[]; mem.t=null; $('#fireBtn').disabled=false; $('#fireBtn').textContent='กระตุ้นอีกครั้ง'; }
+  }
+  mem.pumpT+=dt; mem.pump=Math.max(0,mem.pump-dt*1.5);
+  if(mem.pumpT>1.0 && (mem.t===null || mem.t>1.9)){ mem.pumpT=0;
+    const naIn=mem.parts.filter(p=>p.type==='na'&&p.side==='in').length, kOut=mem.parts.filter(p=>p.type==='k'&&p.side==='out').length;
+    let moved=false; for(let i=0;i<Math.min(3,naIn-5);i++) moved = sendThrough('na','in',mem.pumpX) || moved;
+    for(let i=0;i<Math.min(2,kOut-4);i++) moved = sendThrough('k','out',mem.pumpX) || moved;
+    if(moved) mem.pump=1; }
+  const jig = reduce ? 30 : 110;
+  for(const p of mem.parts){
+    if(p.wp){ const q=p.wp[0], dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy), st=280*dt;
+      if(d<=st){ p.x=q.x; p.y=q.y; p.wp.shift(); if(!p.wp.length) p.wp=null; } else { p.x+=dx/d*st; p.y+=dy/d*st; } continue; }
+    p.vx=(p.vx+(Math.random()-.5)*jig*dt*6)*0.97; p.vy=(p.vy+(Math.random()-.5)*jig*dt*6)*0.97;
+    const sp=Math.hypot(p.vx,p.vy), mx=reduce?8:28; if(sp>mx){p.vx*=mx/sp;p.vy*=mx/sp;}
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+    const y0 = p.side==='out'?14:mem.bot+12, y1 = p.side==='out'?mem.top-12:mem.H-14;
+    if(p.x<10){p.x=10;p.vx*=-1} if(p.x>mem.w-10){p.x=mem.w-10;p.vx*=-1}
+    if(p.y<y0){p.y=y0;p.vy*=-1} if(p.y>y1){p.y=y1;p.vy*=-1}
+  }
+}
+function channel(ctx,x,open,color){ const g=open?16:3, h=mem.bot-mem.top+10, y=mem.top-5;
+  if(open){ ctx.fillStyle=color; ctx.globalAlpha=.28; ctx.fillRect(x-g/2,y,g,h); ctx.globalAlpha=1; }
+  ctx.fillStyle=color; ctx.globalAlpha=.85; rr(ctx,x-g/2-11,y,11,h,5); ctx.fill(); rr(ctx,x+g/2,y,11,h,5); ctx.fill(); ctx.globalAlpha=1; }
+function memDraw(){ const {ctx,w,H,top,bot}=mem; const V=volt(mem.t); const t=mem.t;
+  ctx.clearRect(0,0,w,H);
+  ctx.fillStyle=C.muted; ctx.font='500 12px '+FONT; ctx.textBaseline='top'; ctx.textAlign='left';
+  ctx.fillText('นอกเซลล์',12,8); ctx.textBaseline='bottom'; ctx.fillText('ในเซลล์',12,H-6);
+  ctx.fillStyle=C.membrane; ctx.globalAlpha=.25; ctx.fillRect(0,top,w,bot-top); ctx.globalAlpha=1;
+  const skip = x => Math.abs(x-mem.naX)<24 || Math.abs(x-mem.kX)<24 || Math.abs(x-mem.pumpX)<26;
+  ctx.strokeStyle=C.membrane; ctx.lineWidth=1.2;
+  for(let x=6;x<w;x+=11){ if(skip(x)) continue;
+    ctx.beginPath(); ctx.moveTo(x-1.5,top+9); ctx.lineTo(x-1.5,(top+bot)/2-2); ctx.moveTo(x+1.5,top+9); ctx.lineTo(x+1.5,(top+bot)/2-2);
+    ctx.moveTo(x-1.5,bot-9); ctx.lineTo(x-1.5,(top+bot)/2+2); ctx.moveTo(x+1.5,bot-9); ctx.lineTo(x+1.5,(top+bot)/2+2); ctx.stroke();
+    ctx.fillStyle=C.membrane; ctx.beginPath(); ctx.arc(x,top+5,4.5,0,7); ctx.arc(x,bot-5,4.5,0,7); ctx.fill(); }
+  const naOpen = t!==null && t>0.6 && t<1.15, kOpen = t!==null && t>1.0 && t<2.2;
+  channel(ctx,mem.naX,naOpen,C.na); channel(ctx,mem.kX,kOpen,C.k);
+  const pr = 17+mem.pump*4; ctx.fillStyle=C.surface; ctx.strokeStyle=C.signal; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(mem.pumpX,(top+bot)/2,pr,0,7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=C.signal; ctx.font='700 11px '+FONT; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('ATP',mem.pumpX,(top+bot)/2);
+  // charge signs
+  const pos = V>0; ctx.font='700 13px '+FONT; ctx.globalAlpha=.75;
+  for(let x=30;x<w;x+=46){ if(skip(x)) continue;
+    ctx.fillStyle = pos ? C.muted : C.signal; ctx.fillText(pos?'−':'+', x, top-7);
+    ctx.fillStyle = pos ? C.signal : C.muted; ctx.fillText(pos?'+':'−', x, bot+8); }
+  ctx.globalAlpha=1;
+  for(const p of mem.parts){ if(p.type==='na'){ ctx.fillStyle=C.na; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7); ctx.fill(); }
+    else { ctx.fillStyle=C.k; ctx.fillRect(p.x-4.5,p.y-4.5,9,9); } }
+  pill(ctx,'ประตู Na⁺'+(naOpen?' เปิด':''),mem.naX,top-26,'center',naOpen?C.na:C.muted);
+  pill(ctx,'ประตู K⁺'+(kOpen?' เปิด':''),mem.kX,bot+26,'center',kOpen?C.k:C.muted);
+  pill(ctx,'ปั๊ม Na⁺/K⁺',mem.pumpX,top-26,'center',mem.pump>0.1?C.signal:C.muted);
+  $('#vRead').textContent = fmtV(V);
+  const si = memStage(t); document.querySelectorAll('#memStages li').forEach((li,i)=>li.classList.toggle('on',i===si));
+}
+function plotDraw(){ const {ctx,w,h}=plot; ctx.clearRect(0,0,w,h);
+  const L=54,R=14,T=14,B=28, X=t=>L+(w-L-R)*t/5, Y=v=>T+(h-T-B)*(50-v)/140;
+  ctx.font='500 11px '+FONT; ctx.textBaseline='middle'; ctx.textAlign='right';
+  [[40,'+40'],[0,'0'],[-55,'−55'],[-70,'−70']].forEach(([v,lab])=>{ ctx.strokeStyle=C.line; ctx.lineWidth=1; ctx.setLineDash(v===-55?[4,4]:[]);
+    ctx.beginPath(); ctx.moveTo(L,Y(v)); ctx.lineTo(w-R,Y(v)); ctx.stroke(); ctx.fillStyle=C.muted; ctx.fillText(lab,L-8,Y(v)); });
+  ctx.setLineDash([]); ctx.textAlign='left'; ctx.fillStyle=C.muted;
+  ctx.fillText('จุดเริ่ม',w-R-44,Y(-55)-9);
+  ctx.textAlign='center'; ctx.textBaseline='top'; for(let s=0;s<=5;s++) ctx.fillText(s+(s===5?' ms':''),X(s),h-B+8);
+  ctx.save(); ctx.translate(14,(T+h-B)/2); ctx.rotate(-Math.PI/2); ctx.textBaseline='middle'; ctx.fillText('mV',0,0); ctx.restore();
+  const line=(arr,col,lw)=>{ if(arr.length<2) return; ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.lineJoin='round'; ctx.beginPath(); arr.forEach(([t,v],i)=> i?ctx.lineTo(X(t),Y(v)):ctx.moveTo(X(t),Y(v))); ctx.stroke(); };
+  if(mem.t===null && !mem.last.length){ ctx.strokeStyle=C.signal; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(X(0),Y(-70)); ctx.lineTo(X(5),Y(-70)); ctx.stroke(); }
+  line(mem.last, mem.t===null?C.signal:C.line, mem.t===null?2.5:2);
+  line(mem.trace, C.signal, 2.5);
+  if(mem.t!==null){ const v=volt(mem.t); ctx.fillStyle=C.signal; ctx.beginPath(); ctx.arc(X(Math.min(5,mem.t)),Y(v),5,0,7); ctx.fill(); }
+}
+function fire(){ if(mem.t!==null) return; mem.t=0; mem.trace=[]; mem.accNa=mem.accK=0; mem.fired=true; const b=$('#fireBtn'); b.disabled=true; b.textContent='กำลังยิง…'; }
+$('#fireBtn').addEventListener('click',fire);
+$('#slowChk').addEventListener('change',e=>{ mem.speed = e.target.checked?0.35:0.9; });
+
+/* ---------- 2. conduction race ---------- */
+const tr = {cv:$('#travelCanvas'), H:250, t:null};
+function trLayout(){ Object.assign(tr, setup(tr.cv, tr.H)); }
+const DUR1=0.8, DUR2=7;
+function lane(ctx,y,myelin,label){ const x0=34, ax0=x0+14, xe=tr.w-40;
+  ctx.fillStyle=C.muted; ctx.font='600 13px '+FONT; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(label,12,y-42);
+  ctx.strokeStyle=C.muted; ctx.lineWidth=2; ctx.lineCap='round';
+  [[-20,-24],[-24,14],[-8,26],[6,-26]].forEach(([dx,dy])=>{ ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x0+dx,y+dy); ctx.stroke(); });
+  ctx.lineWidth=3.5; ctx.beginPath(); ctx.moveTo(ax0,y); ctx.lineTo(xe,y); ctx.stroke();
+  [-16,0,16].forEach(dy=>{ ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(xe,y); ctx.lineTo(xe+20,y+dy); ctx.stroke(); ctx.fillStyle=C.muted; ctx.beginPath(); ctx.arc(xe+22,y+dy,4,0,7); ctx.fill(); });
+  ctx.fillStyle=C.surface; ctx.strokeStyle=C.muted; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x0,y,14,0,7); ctx.fill(); ctx.stroke();
+  const N=Math.max(4,Math.round((xe-ax0)/62)), seg=(xe-ax0)/N, nodes=[];
+  for(let i=0;i<=N;i++) nodes.push(ax0+i*seg);
+  if(myelin){ ctx.fillStyle=C.myelin; ctx.strokeStyle=C.muted; ctx.lineWidth=1;
+    for(let i=0;i<N;i++){ rr(ctx,nodes[i]+4,y-8,seg-8,16,8); ctx.fill(); ctx.stroke(); } }
+  return {ax0,xe,nodes};
+}
+function glow(ctx,x,y,r,a){ const g=ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,C.signal); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.globalAlpha=a; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); ctx.globalAlpha=1; }
+function trDraw(){ const {ctx,w,H}=tr; ctx.clearRect(0,0,w,H);
+  const y1=78, y2=192;
+  const a=lane(ctx,y1,true,'มีปลอกไมอีลิน: กระโดดข้ามช่อง');
+  const b=lane(ctx,y2,false,'ไม่มีปลอกไมอีลิน: ค่อย ๆ ลามไปทีละนิด');
+  const t=tr.t;
+  if(t!==null){
+    const N=a.nodes.length-1, idx=Math.min(N,Math.floor(t/DUR1*N));
+    for(let k=Math.max(0,idx-2);k<=idx;k++) glow(ctx,a.nodes[k],y1,k===idx?20:12,k===idx?1:.35);
+    if(idx>=N){ pill(ctx,'ถึงแล้ว',w-12,y1-26,'right',C.signal); }
+    const p=Math.min(1,t/DUR2), x=b.ax0+(b.xe-b.ax0)*p;
+    const g=ctx.createLinearGradient(Math.max(b.ax0,x-90),0,x,0); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,C.signal);
+    ctx.strokeStyle=g; ctx.lineWidth=7; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(Math.max(b.ax0,x-90),y2); ctx.lineTo(x,y2); ctx.stroke();
+    glow(ctx,x,y2,18,1);
+    if(p>=1) pill(ctx,'ถึงแล้ว',w-12,y2-26,'right',C.signal);
+    else if(idx>=N) pill(ctx,'ยังเดินทางอยู่…',w-12,y2-26,'right',C.muted);
+  }
+}
+function trUpdate(dt){ if(tr.t===null) return; tr.t+=dt; if(tr.t>DUR2+2.5){ tr.t=null; $('#raceBtn').disabled=false; } }
+$('#raceBtn').addEventListener('click',()=>{ tr.t=0; $('#raceBtn').disabled=true; });
+
+/* ---------- 3. synapse ---------- */
+const sy = {cv:$('#synCanvas'), H:350, t:null, ves:[], nt:[], ca:[], post:[], rec:[]};
+function syLayout(){ Object.assign(sy, setup(sy.cv, sy.H)); sy.cx=sy.w/2; sy.half=Math.min(170, sy.w/2-16);
+  const {cx,half}=sy; sy.memY=150; sy.postY=186;
+  sy.home=[[-0.55,88],[-0.2,70],[0.15,96],[0.5,78],[0.0,122],[-0.4,124]].map(([f,y])=>({x:cx+f*half,y}));
+  sy.rec=[]; const n=6; for(let i=0;i<n;i++) sy.rec.push({x:cx-half+34+i*(2*half-68)/(n-1), bound:0});
+  syReset(); }
+function syReset(){ sy.ves=sy.home.map(h=>({x:h.x,y:h.y,hx:h.x,hy:h.y,a:1,fused:false})); sy.nt=[]; sy.ca=[]; sy.post=[]; sy.rec.forEach(r=>r.bound=0); }
+function synStage(t){ if(t===null||t<0.9) return 0; if(t<1.5) return 1; if(t<2.6) return 2; if(t<4.6) return 3; return 4; }
+function syUpdate(dt){ if(sy.t===null) return; const prev=sy.t; sy.t+=dt; const t=sy.t, {cx,half,memY,postY}=sy;
+  if(prev<0.9 && t>=0.9){ for(const s of [-1,1]) for(let i=0;i<4;i++) sy.ca.push({x:cx+s*(half+16),y:104+i*9,tx:cx+s*(half-30-rnd(0,40)),ty:rnd(110,138),a:1,d:i*0.08}); }
+  for(const c of sy.ca){ if(c.d>0){c.d-=dt;continue;} c.x+=(c.tx-c.x)*Math.min(1,dt*4); c.y+=(c.ty-c.y)*Math.min(1,dt*4); if(t>3.2) c.a=Math.max(0,c.a-dt); }
+  for(const v of sy.ves){ if(t>1.4 && t<2.2 && !v.fused){ const k=ease((t-1.4)/0.8); v.y=v.hy+(memY-12-v.hy)*k; }
+    if(t>=2.2 && !v.fused){ v.fused=true; v.y=memY-12; for(let i=0;i<6;i++) sy.nt.push({x:v.x+rnd(-8,8),y:memY+3,vx:rnd(-30,30),vy:rnd(10,40),bound:null,a:1,back:false}); }
+    if(v.fused && t<5.4) v.a=Math.max(0,v.a-dt*3);
+    if(t>=5.4){ v.x=v.hx; v.y=v.hy; v.a=Math.min(1,v.a+dt*1.5); } }
+  for(const p of sy.nt){
+    if(p.bound){ if(t>=4.6){ p.bound.bound=Math.max(0,p.bound.bound-1); p.bound=null; p.back=true; } else continue; }
+    if(t>=4.6) p.back=true;
+    if(p.back){ p.vy=-40; p.vx*=0.9; p.y+=p.vy*dt; if(p.y<memY+4) p.a=Math.max(0,p.a-dt*3); continue; }
+    p.vx=(p.vx+(Math.random()-.5)*160*dt)*0.98; p.vy=(p.vy+(Math.random()-.4)*120*dt)*0.98;
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+    if(p.x<cx-half+8){p.x=cx-half+8;p.vx*=-1} if(p.x>cx+half-8){p.x=cx+half-8;p.vx*=-1}
+    if(p.y<memY+4){p.y=memY+4;p.vy=Math.abs(p.vy)}
+    if(p.y>postY-6){ const r=sy.rec.find(r=>Math.abs(r.x-p.x)<14 && r.bound<2);
+      if(r){ r.bound++; p.bound=r; p.x=r.x+(r.bound===1?-4:4); p.y=postY-5; for(let i=0;i<3;i++) sy.post.push({x:r.x+rnd(-4,4),y:postY+6,ty:rnd(postY+40,sy.H-20),a:1,d:i*0.15}); }
+      else { p.y=postY-6; p.vy=-Math.abs(p.vy); } } }
+  for(const q of sy.post){ if(q.d>0){q.d-=dt;continue;} q.y+=(q.ty-q.y)*Math.min(1,dt*2.5); q.x+=(Math.random()-.5)*20*dt; if(t>5) q.a=Math.max(0,q.a-dt); }
+  if(t>6.8){ sy.t=null; syReset(); $('#synBtn').disabled=false; }
+}
+function syDraw(){ const {ctx,w,H,cx,half,memY,postY}=sy, t=sy.t; ctx.clearRect(0,0,w,H);
+  // presynaptic bulb
+  ctx.beginPath(); ctx.moveTo(cx-30,0); ctx.bezierCurveTo(cx-30,30,cx-half,36,cx-half,84); ctx.lineTo(cx-half,memY-28);
+  ctx.quadraticCurveTo(cx-half,memY,cx-half+28,memY); ctx.lineTo(cx+half-28,memY); ctx.quadraticCurveTo(cx+half,memY,cx+half,memY-28);
+  ctx.lineTo(cx+half,84); ctx.bezierCurveTo(cx+half,36,cx+30,30,cx+30,0); ctx.closePath();
+  ctx.fillStyle=C.surface2; ctx.fill(); ctx.strokeStyle=C.muted; ctx.lineWidth=2; ctx.stroke();
+  if(t!==null && t<1.6){ const y=Math.min(memY-8, 140*ease(t/0.9)); ctx.save(); ctx.clip();
+    const g=ctx.createLinearGradient(0,y-50,0,y+10); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,C.signal);
+    ctx.globalAlpha = t<0.9?0.55:Math.max(0,0.55*(1.6-t)/0.7); ctx.fillStyle=g; ctx.fillRect(0,y-50,w,60); ctx.restore(); ctx.globalAlpha=1; }
+  // Ca channels on the bulb walls
+  ctx.fillStyle=C.ca; for(const s of [-1,1]){ rr(ctx,cx+s*half-5,104,10,30,4); ctx.fill(); }
+  // postsynaptic
+  const bound=sy.rec.reduce((a,r)=>a+r.bound,0);
+  ctx.beginPath(); ctx.moveTo(cx-half-10,H); ctx.lineTo(cx-half-10,postY+24); ctx.quadraticCurveTo(cx-half-10,postY,cx-half+14,postY);
+  ctx.lineTo(cx+half-14,postY); ctx.quadraticCurveTo(cx+half+10,postY,cx+half+10,postY+24); ctx.lineTo(cx+half+10,H); ctx.closePath();
+  ctx.fillStyle=C.surface2; ctx.fill(); if(bound){ ctx.globalAlpha=Math.min(.3,bound*0.03); ctx.fillStyle=C.signal; ctx.fill(); ctx.globalAlpha=1; }
+  ctx.strokeStyle=C.muted; ctx.lineWidth=2; ctx.stroke();
+  for(const r of sy.rec){ ctx.fillStyle = r.bound?C.signal:C.muted; ctx.fillRect(r.x-11,postY-6,4,12); ctx.fillRect(r.x+7,postY-6,4,12); ctx.fillRect(r.x-11,postY+2,22,4); }
+  for(const v of sy.ves){ if(v.a<=0.01) continue; ctx.globalAlpha=v.a; ctx.strokeStyle=C.nt; ctx.lineWidth=1.5; ctx.fillStyle=C.surface;
+    ctx.beginPath(); ctx.arc(v.x,v.y,13,0,7); ctx.fill(); ctx.stroke(); ctx.fillStyle=C.nt;
+    for(let i=0;i<6;i++){ const a=i/6*6.283; ctx.beginPath(); ctx.arc(v.x+Math.cos(a)*6,v.y+Math.sin(a)*6,2.2,0,7); ctx.fill(); } ctx.globalAlpha=1; }
+  ctx.fillStyle=C.ca; for(const c of sy.ca){ if(c.d>0||c.a<=0) continue; ctx.globalAlpha=c.a; ctx.beginPath(); ctx.moveTo(c.x,c.y-5); ctx.lineTo(c.x+5,c.y+4); ctx.lineTo(c.x-5,c.y+4); ctx.closePath(); ctx.fill(); } ctx.globalAlpha=1;
+  ctx.fillStyle=C.nt; for(const p of sy.nt){ if(p.a<=0) continue; ctx.globalAlpha=p.a; ctx.beginPath(); ctx.arc(p.x,p.y,3.2,0,7); ctx.fill(); } ctx.globalAlpha=1;
+  ctx.fillStyle=C.na; for(const q of sy.post){ if(q.d>0||q.a<=0) continue; ctx.globalAlpha=q.a; ctx.beginPath(); ctx.arc(q.x,q.y,4,0,7); ctx.fill(); } ctx.globalAlpha=1;
+  pill(ctx,'เซลล์ส่ง (ปลายแอกซอน)',cx,22,'center',C.muted);
+  pill(ctx,'ช่องไซแนปส์',cx+half-4,memY+18,'right',C.muted);
+  pill(ctx, bound? 'เซลล์รับ: เกิดสัญญาณไฟฟ้าใหม่' : 'เซลล์รับ (เดนไดรต์)', cx, H-22,'center', bound?C.signal:C.muted);
+  const si=synStage(t); document.querySelectorAll('#synStages li').forEach((li,i)=>li.classList.toggle('on',i===si));
+}
+$('#synBtn').addEventListener('click',()=>{ if(sy.t!==null) return; syReset(); sy.t=0; $('#synBtn').disabled=true; });
+
+/* ---------- loop ---------- */
+const vis = {mem:true, tr:true, sy:true};
+const io = new IntersectionObserver(es=>es.forEach(e=>{
+  const k=e.target.dataset.k; vis[k]=e.isIntersecting;
+  if(e.isIntersecting && !reduce){ if(k==='mem' && !mem.fired) setTimeout(fire,900); if(k==='sy' && !sy.auto){ sy.auto=true; setTimeout(()=>$('#synBtn').click(),900); } if(k==='tr' && !tr.auto){ tr.auto=true; setTimeout(()=>{ if(tr.t===null) $('#raceBtn').click(); },900); } }
+}),{threshold:.35});
+mem.cv.dataset.k='mem'; tr.cv.dataset.k='tr'; sy.cv.dataset.k='sy';
+[mem.cv,tr.cv,sy.cv].forEach(c=>io.observe(c));
+function layoutAll(){ memLayout(); trLayout(); syLayout(); }
+memInit(); trLayout(); syLayout();
+let rt; window.addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(layoutAll,120); });
+let last=performance.now();
+function frame(now){ const dt=Math.min(0.05,(now-last)/1000); last=now;
+  memUpdate(dt); trUpdate(dt); syUpdate(dt);
+  if(vis.mem){ memDraw(); plotDraw(); } if(vis.tr) trDraw(); if(vis.sy) syDraw();
+  requestAnimationFrame(frame); }
+memDraw(); plotDraw(); trDraw(); syDraw();
+requestAnimationFrame(frame);
+
+/* ---------- 4. brain map ---------- */
+const R = {
+  frontal:{n:'สมองกลีบหน้า',en:'FRONTAL LOBE · PREFRONTAL CORTEX',d:'ศูนย์บัญชาการของความคิดระดับสูง',l:['วางแผน ตั้งเป้าหมาย ตัดสินใจ','ยับยั้งชั่งใจ ควบคุมอารมณ์และพฤติกรรม','ความจำใช้งาน (ถือข้อมูลไว้ในหัวขณะคิด) และสมาธิ','บริเวณโบรคา (มักอยู่ซีกซ้าย) ช่วยเรียบเรียงและพูดออกมา'],ex:'คิดว่าจะอ่านหนังสือต่อหรือพักก่อน แล้วเลือกตามเป้าหมาย',lr:'ใช้มากตอนสะท้อนคิดและชั่งน้ำหนัก feedback หลายมุม ทำงานแย่ลงชัดเจนเมื่ออดนอนหรือเครียดหนัก'},
+  motor:{n:'คอร์เท็กซ์สั่งการ',en:'PRIMARY MOTOR CORTEX',d:'แถบที่ส่งคำสั่งไปยังกล้ามเนื้อ',l:['แต่ละจุดบนแถบนี้คุมกล้ามเนื้อคนละส่วนของร่างกาย','มือ นิ้ว ปาก ลิ้น ได้พื้นที่มากเป็นพิเศษ เพราะต้องขยับละเอียด','ซีกซ้ายคุมร่างกายซีกขวา และกลับกัน'],ex:'ส่งคำสั่ง "เหยียดแขน กำนิ้ว" ตอนหยิบแก้วน้ำ',lr:'เมื่อฝึกทักษะใหม่ เช่น เล่นดนตรี พื้นที่ที่คุมนิ้วจะจัดเครือข่ายใหม่ให้แม่นขึ้น'},
+  somato:{n:'คอร์เท็กซ์รับความรู้สึก',en:'SOMATOSENSORY CORTEX',d:'แถบที่รับรายงานความรู้สึกจากทั่วร่างกาย',l:['สัมผัส แรงกด ร้อน เย็น เจ็บ','รู้ตำแหน่งของแขนขาโดยไม่ต้องมอง','จัดเรียงเป็นแผนที่ร่างกายคู่กับแถบสั่งการด้านหน้า'],ex:'รู้ว่าแก้วเย็นและลื่น จึงปรับแรงบีบ',lr:'การเรียนแบบลงมือจับต้องได้ส่งข้อมูลเข้ามาหลายช่องทาง ช่วยให้จำได้ดีขึ้น'},
+  parietal:{n:'สมองกลีบข้าง',en:'PARIETAL LOBE',d:'นักรวมข้อมูลและนักกะระยะ',l:['รวมข้อมูลสัมผัส ภาพ และเสียงเข้าด้วยกัน','รับรู้ตำแหน่ง ระยะ ทิศทาง และมิติ','เกี่ยวข้องกับการคิดคำนวณและการจดจ่อความสนใจ'],ex:'กะว่าแก้วอยู่ห่างแค่ไหน ต้องเอื้อมไปทางไหน',lr:'ช่วยตอนอ่านกราฟ แผนภาพ และข้อมูลเชิงตัวเลข'},
+  temporal:{n:'สมองกลีบขมับ',en:'TEMPORAL LOBE',d:'ด้านข้างใกล้หู ดูแลเสียง ภาษา และความจำ',l:['ประมวลผลการได้ยิน','บริเวณเวอร์นิเก (มักอยู่ซีกซ้าย) ช่วยเข้าใจความหมายของภาษา','จดจำใบหน้าและวัตถุ','ด้านในมีฮิปโปแคมปัสและอะมิกดาลา (เปิด "ส่วนลึก" เพื่อดู)'],ex:'ได้ยินเพื่อนเรียกชื่อ แล้วจำเสียงและหน้าได้ทันที',lr:'เชื่อมเสียง คำ และความหมายเข้าด้วยกัน การฟังแล้วอธิบายซ้ำด้วยคำของตัวเองช่วยตรงนี้มาก'},
+  occipital:{n:'สมองกลีบท้ายทอย',en:'OCCIPITAL LOBE',d:'ศูนย์การมองเห็น',l:['รับสัญญาณจากตาผ่านทาลามัส','แยกเส้น ขอบ สี รูปทรง และการเคลื่อนไหว','ส่งต่อไปยังกลีบขมับ (นี่คืออะไร) และกลีบข้าง (อยู่ตรงไหน)'],ex:'เห็นแก้วน้ำบนโต๊ะ',lr:'ภาพ แผนผัง และแอนิเมชัน ใช้ระบบการมองเห็นที่ทรงพลังมากของสมอง'},
+  cerebellum:{n:'สมองน้อย',en:'CEREBELLUM',d:'ผู้ช่วยปรับจูนการเคลื่อนไหว',l:['ทรงตัวและประสานกล้ามเนื้อให้ทำงานพร้อมกัน','เทียบสิ่งที่ตั้งใจทำกับสิ่งที่ทำจริง แล้วแก้ทันที','เรียนรู้ทักษะจนทำได้อัตโนมัติ เช่น ขี่จักรยาน พิมพ์สัมผัส','มีเซลล์ประสาทราว 69,000 ล้าน หรือราว 80% ของทั้งสมอง'],ex:'ทำให้แขนเอื้อมไปถึงแก้วอย่างนุ่มนวล ไม่ปัดแก้วล้ม',lr:'การฝึกซ้ำพร้อมรู้ผลทันทีว่าพลาดตรงไหน คือวิธีที่สมองน้อยเรียนรู้ได้ดีที่สุด'},
+  brainstem:{n:'ก้านสมอง',en:'BRAINSTEM',d:'ทางด่วนและระบบพื้นฐานของชีวิต',l:['คุมการหายใจ การเต้นของหัวใจ ความดันเลือด การกลืน','ควบคุมการตื่นตัวและวงจรหลับตื่น','สัญญาณขึ้นลงระหว่างสมองกับไขสันหลังผ่านตรงนี้ และข้ามฝั่งซ้ายขวา'],ex:'ส่งคำสั่งยกแขนลงไขสันหลัง ไปยังเส้นประสาทที่แขน',lr:'ความตื่นตัวที่พอดีช่วยให้เรียนรู้ได้ดี การนอนพอช่วยรักษาจังหวะนี้'},
+  thalamus:{n:'ทาลามัส',en:'THALAMUS',d:'สถานีถ่ายทอดกลางสมอง',l:['รับข้อมูลจากประสาทสัมผัสเกือบทุกชนิด (ยกเว้นกลิ่น) แล้วส่งต่อไปยังเปลือกสมองส่วนที่เกี่ยวข้อง','คัดกรองว่าข้อมูลไหนควรได้รับความสนใจ','เกี่ยวข้องกับการตื่นและการหลับ'],ex:'ส่งภาพจากตาไปยังกลีบท้ายทอย',lr:'การลดสิ่งรบกวนรอบตัวช่วยให้ข้อมูลสำคัญผ่านด่านไปถึงการคิดได้ง่ายขึ้น'},
+  hypothalamus:{n:'ไฮโปทาลามัส',en:'HYPOTHALAMUS',d:'ตัวควบคุมสมดุลร่างกาย',l:['หิว อิ่ม กระหาย อุณหภูมิร่างกาย','ควบคุมฮอร์โมนผ่านต่อมใต้สมอง รวมถึงฮอร์โมนความเครียด','นาฬิกาชีวิต บอกร่างกายว่าเวลานี้ควรตื่นหรือนอน'],ex:'รู้สึกง่วงเมื่อถึงเวลานอนประจำ',lr:'นอนและตื่นให้เป็นเวลาช่วยให้นาฬิกาชีวิตทำงานตรง สมองจึงพร้อมเรียนในช่วงที่ตื่น'},
+  hippocampus:{n:'ฮิปโปแคมปัส',en:'HIPPOCAMPUS',d:'ผู้บันทึกความจำใหม่',l:['สร้างความจำใหม่เกี่ยวกับเหตุการณ์และข้อเท็จจริง','ความจำเชิงพื้นที่ จำเส้นทางและสถานที่','ระหว่างหลับจะเล่นซ้ำสิ่งที่เพิ่งเรียน ช่วยย้ายไปเก็บระยะยาวในเปลือกสมอง'],ex:'จำได้ว่าเมื่อเช้าวางกุญแจไว้ตรงไหน',lr:'ทบทวนเป็นช่วง ๆ เว้นระยะ และนอนให้พอ ช่วยให้ความจำติดทนกว่าการอัดรวดเดียว'},
+  amygdala:{n:'อะมิกดาลา',en:'AMYGDALA',d:'สัญญาณเตือนภัยทางอารมณ์',l:['ประเมินอย่างรวดเร็วว่าสิ่งนี้อันตรายหรือสำคัญไหม','เกี่ยวกับความกลัว ความกังวล และอารมณ์อื่น ๆ','ทำให้เหตุการณ์ที่มีอารมณ์ร่วมถูกจดจำได้แม่นขึ้น'],ex:'สะดุ้งเมื่อได้ยินเสียงดังก่อนจะรู้ตัวว่าเป็นอะไร',lr:'อารมณ์บวกและความอยากรู้ช่วยให้จำ แต่ความกลัวที่มากเกินไปทำให้ไม่กล้าลองและปิดรับมุมมองใหม่'}
+};
+const svg=$('#brain'), info=$('#info');
+function setActive(id){ const r=R[id]; if(!r) return;
+  svg.querySelectorAll('[data-id]').forEach(el=>el.classList.toggle('on',el.dataset.id===id));
+  const isDeep=['thalamus','hypothalamus','hippocampus','amygdala'].includes(id);
+  if(isDeep && !svg.classList.contains('show-deep')){ svg.classList.add('show-deep'); $('#deepChk').checked=true; }
+  info.innerHTML='<div class="en">'+r.en+'</div><h3>'+r.n+'</h3><p>'+r.d+'</p><ul>'+r.l.map(x=>'<li>'+x+'</li>').join('')+'</ul><p class="ex"><b>ตัวอย่างในชีวิตจริง:</b> '+r.ex+'</p><p class="lrn"><b>เกี่ยวกับการเรียนรู้:</b> '+r.lr+'</p>'; }
+svg.querySelectorAll('[data-id]').forEach(el=>{ el.addEventListener('click',()=>setActive(el.dataset.id));
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); setActive(el.dataset.id); } }); });
+$('#deepChk').addEventListener('change',e=>svg.classList.toggle('show-deep',e.target.checked));
+setActive('frontal');
+const PATH=[['occipital','ตาเห็นแก้วน้ำ สมองกลีบท้ายทอยแปลภาพว่ามีวัตถุอยู่ตรงนั้น'],['parietal','กลีบข้างคำนวณตำแหน่งและระยะ ว่าต้องเอื้อมไปทางไหน ไกลแค่ไหน'],['frontal','กลีบหน้าตัดสินใจ: "หิวน้ำ หยิบเลย"'],['motor','แถบสั่งการยิงสัญญาณไฟฟ้าไปยังกล้ามเนื้อแขนและนิ้ว'],['brainstem','สัญญาณวิ่งผ่านก้านสมอง ข้ามฝั่ง แล้วลงไขสันหลังไปที่แขน'],['cerebellum','สมองน้อยคอยเทียบและแก้ทิศทางให้แขนเคลื่อนนุ่มและตรงเป้า'],['somato','มือแตะแก้ว ความรู้สึกเย็นและน้ำหนักวิ่งกลับมาที่แถบรับสัมผัส เพื่อปรับแรงจับ']];
+$('#pathBtn').addEventListener('click',()=>{ const b=$('#pathBtn'); b.disabled=true; svg.classList.remove('show-deep'); $('#deepChk').checked=false;
+  let i=0; const step=()=>{ if(i>=PATH.length){ b.disabled=false; $('#pathCap').innerHTML='ทั้งหมดนี้เกิดขึ้นในเวลาไม่ถึงหนึ่งวินาที และหลายขั้นทำงานซ้อนกันไปพร้อม ๆ กัน'; return; }
+    const [id,txt]=PATH[i]; setActive(id); $('#pathCap').innerHTML='<b>'+(i+1)+'/'+PATH.length+'</b> '+txt; i++; setTimeout(step, reduce?2600:2000); };
+  step(); });
+})();
+</script>
+</body>
+</html>
