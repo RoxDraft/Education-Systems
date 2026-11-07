@@ -61,3 +61,9 @@
 - [OpenStax: Interactions of Skeletal Muscles](https://openstax.org/books/anatomy-and-physiology-2e/pages/11-1-interactions-of-skeletal-muscles-their-fascicle-arrangement-and-their-lever-systems)
 - [Learning-induced autonomy of sensorimotor systems](https://www.nature.com/articles/nn.3993)
 - Three.js 0.160.1: [MIT license](assets/vendor/THREE-LICENSE.txt)
+
+### ภาพประกอบหน้าเมนู
+
+เพิ่มภาพประกอบแนวคิดเรื่องการเชื่อมต่อและการเรียนรู้ 3 มุม: เซลล์ประสาทชีวภาพ โครงข่ายประสาทดิจิทัล และกลุ่มคนที่อ่าน สนทนา และแบ่งปันความรู้ร่วมกันในสังคม ภาพเป็นการเล่าแนวคิด ไม่ใช่แผนภาพที่ระบุว่าทั้งสามระบบมีกลไกเหมือนกัน
+
+ภาพสร้างด้วยเครื่องมือ ImageGen และจัดวางในหน้าเว็บโดย GPT-6.1 Sol ใช้ไฟล์ WebP ที่เก็บในโปรเจกต์ พร้อมคำอธิบายภาพสำหรับโปรแกรมอ่านหน้าจอ และจัดวางใหม่เมื่อเปิดบนมือถือ ดู [ภาพและ prompt ที่ใช้](assets/images/README.md)
