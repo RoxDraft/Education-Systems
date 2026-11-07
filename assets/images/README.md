@@ -1,0 +1,11 @@
+# ภาพประกอบหน้าเมนู: การเชื่อมต่อและการเรียนรู้
+
+- ไฟล์: [learning-connections.webp](learning-connections.webp), 1536 × 1024 pixels
+- สร้างด้วยเครื่องมือ ImageGen แบบ built-in เมื่อ 2026-11-08
+- กำกับภาพและรวมเข้าเว็บไซต์โดย GPT-6.1 Sol ตามคำขอของ Usu
+- แปลง PNG ต้นฉบับเป็น WebP เพื่อใช้บนเว็บ โดยคงองค์ประกอบภาพเดิม
+- ภาพประกอบแนวคิด: เซลล์ประสาทชีวภาพ โครงข่ายประสาทดิจิทัล และกลุ่มคนที่เรียนรู้ร่วมกัน ภาพนี้ไม่ใช่แผนภาพกายวิภาคหรือข้ออ้างว่าทั้งสามระบบมีกลไกเหมือนกัน
+
+## Prompt ที่ใช้สร้างภาพ
+
+Use case: illustration-story. Asset type: editorial hero illustration for a minimalist Thai educational website, Education Systems. Create one polished landscape illustration, wide composition, about 3:2 aspect ratio. Subject: three clearly distinct yet visually related scenes of learning and connection: (1) a recognizable biological neuron with organic branching dendrites, soma and a long axon linking to a few other neurons; (2) a clean artificial neural network with round nodes arranged in three to four layers and fine connecting lines; (3) a small diverse group of adult people, including Southeast Asian people, actively learning together in a community: some around a table comparing notebooks, one explaining a simple sketch at a board, another sharing an idea with a partner. People must have clear natural gestures and coherent anatomy. All three themes should be visible, not a generic brain icon. Gentle flowing thin lines suggest connections between ideas across the composition, without presenting the three systems as scientifically identical. Style: refined editorial illustration combining crisp hand-drawn outlines and very subtle soft dimensional shading, mature and friendly, restrained details, generous whitespace. Palette matched to an existing site: ivory/off-white background, sage green, deep forest teal, muted warm ochre and a little terracotta. Low visual noise; no neon sci-fi effects, robot heads, glowing holograms, UI panels or futuristic city. Composition fits a website hero image next to a heading; show all three themes inside the image, no empty area reserved for text and keep subjects away from extreme edges. Background plain light ivory, clean edges. No text, no letters, no logos, no watermark. This is a conceptual illustration, not a medical diagram.
